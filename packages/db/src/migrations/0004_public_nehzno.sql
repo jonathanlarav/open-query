@@ -1,0 +1,1 @@
+ALTER TABLE `reports` ADD `session_id` text REFERENCES chat_sessions(id);

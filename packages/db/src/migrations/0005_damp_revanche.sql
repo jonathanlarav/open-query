@@ -1,0 +1,1 @@
+ALTER TABLE `llm_settings` ADD `chat_history_limit` integer DEFAULT 20 NOT NULL;

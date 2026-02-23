@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1771786467464,
+      "tag": "0000_famous_matthew_murdock",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1771797088279,
+      "tag": "0001_clumsy_donald_blake",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1771799961208,
+      "tag": "0002_nervous_shard",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1771802289792,
+      "tag": "0003_plain_frightful_four",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1771805728876,
+      "tag": "0004_public_nehzno",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1771809898282,
+      "tag": "0005_damp_revanche",
+      "breakpoints": true
+    }
+  ]
+}

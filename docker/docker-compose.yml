@@ -1,0 +1,33 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    environment:
+      - MASTER_KEY=${MASTER_KEY}
+      - DATABASE_URL=file:/data/openquery.db
+      - API_PORT=3001
+      - NODE_ENV=production
+    volumes:
+      - openquery_data:/data
+    ports:
+      - '3001:3001'
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.web
+    environment:
+      - NEXT_PUBLIC_API_URL=http://api:3001
+      - NODE_ENV=production
+    ports:
+      - '3000:3000'
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  openquery_data:

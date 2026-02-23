@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `table_context_connection_table_uniq` ON `table_context` (`connection_id`,`table_name`);
