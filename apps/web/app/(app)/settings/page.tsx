@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ConnectionList } from '@/components/connections/ConnectionList';
@@ -16,7 +16,7 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]['id'];
 
-export default function SettingsPage() {
+function SettingsContent() {
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get('tab') as TabId | null) ?? 'general';
   const [activeTab, setActiveTab] = useState<TabId>(
@@ -101,5 +101,13 @@ export default function SettingsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="flex-1" />}>
+      <SettingsContent />
+    </Suspense>
   );
 }
