@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ConnectionList } from '@/components/connections/ConnectionList';
 import { LLMProviderForm } from '@/components/shared/LLMProviderForm';
@@ -16,7 +17,16 @@ const TABS = [
 type TabId = (typeof TABS)[number]['id'];
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<TabId>('general');
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get('tab') as TabId | null) ?? 'general';
+  const [activeTab, setActiveTab] = useState<TabId>(
+    TABS.some(t => t.id === initialTab) ? initialTab : 'general'
+  );
+
+  useEffect(() => {
+    const tab = searchParams.get('tab') as TabId | null;
+    if (tab && TABS.some(t => t.id === tab)) setActiveTab(tab);
+  }, [searchParams]);
 
   return (
     <div className="flex flex-col h-full">

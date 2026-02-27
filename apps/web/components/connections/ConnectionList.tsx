@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { Database } from 'lucide-react';
+import { Database, BookOpen, Pencil, Trash2 } from 'lucide-react';
 import { useConnections, useDeleteConnection, useTestConnection } from '@/hooks/useConnections';
 import { useAnalysis } from '@/hooks/useAnalysis';
 import { ConnectionBadge } from '@/components/shared/ConnectionBadge';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { parseApiError } from '@/lib/parse-api-error';
 import { formatDistanceToNow } from 'date-fns';
 import type { Connection, ConnectionType } from '@open-query/shared';
@@ -16,106 +17,117 @@ function AnalysisStatusBadge({ connectionId }: { connectionId: string }) {
   if (!job) return null;
 
   if (job.status === 'completed') {
-    return (
-      <span className="text-label text-[var(--color-success)]">Ready ✓</span>
-    );
+    return <span className="text-xs text-[var(--color-success)]">Ready ✓</span>;
   }
   if (job.status === 'failed') {
-    return (
-      <span className="text-label text-[var(--color-error)]">Analysis failed</span>
-    );
+    return <span className="text-xs text-[var(--color-error)]">Analysis failed</span>;
   }
   return (
-    <span className="text-label text-[var(--color-text-muted)]">
+    <span className="text-xs text-[var(--color-text-muted)]">
       Analyzing {job.progressPercent}%
     </span>
   );
 }
 
-function ConnectionRow({ conn }: { conn: Connection }) {
+function ConnectionCard({ conn }: { conn: Connection }) {
   const { mutate: deleteConn } = useDeleteConnection();
   const { mutate: testConn } = useTestConnection();
-  const [testingId, setTestingId] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
   const [testError, setTestError] = useState<string | null>(null);
 
   const handleTest = () => {
-    setTestingId(conn.id);
+    setTesting(true);
+    setTestResult(null);
     testConn(conn.id, {
-      onSuccess: () => {
-        setTestResult('success');
-        setTestError(null);
-        setTestingId(null);
-      },
-      onError: (err) => {
-        setTestResult('error');
-        setTestError(parseApiError(err).message);
-        setTestingId(null);
-      },
+      onSuccess: () => { setTestResult('success'); setTestError(null); setTesting(false); },
+      onError: (err) => { setTestResult('error'); setTestError(parseApiError(err).message); setTesting(false); },
     });
   };
 
+  const handleDelete = () => {
+    if (confirm(`Delete connection "${conn.name}"?`)) deleteConn(conn.id);
+  };
+
   return (
-    <div className="border border-[var(--color-border)] rounded-lg p-4 bg-white flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center">
-          <Database className="w-4 h-4 text-[var(--color-text-muted)]" />
-        </div>
-        <div>
-          <p className="font-medium text-sm text-[var(--color-text-primary)]">{conn.name}</p>
-          <div className="flex items-center gap-2 mt-0.5">
-            <ConnectionBadge type={conn.type as ConnectionType} />
-            {conn.lastConnectedAt && (
-              <span className="text-label text-[var(--color-text-muted)]">
-                Connected {formatDistanceToNow(new Date(conn.lastConnectedAt))} ago
-              </span>
-            )}
-            <AnalysisStatusBadge connectionId={conn.id} />
-          </div>
-        </div>
+    <div className="flex items-start gap-4 p-4 border border-[var(--color-border)] rounded-lg bg-white">
+      {/* DB icon */}
+      <div className="mt-0.5 w-9 h-9 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center shrink-0">
+        <Database className="w-4 h-4 text-[var(--color-text-muted)]" />
       </div>
 
-      <div className="flex items-center gap-2">
+      {/* Info — grows to fill space */}
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-sm text-[var(--color-text-primary)] leading-snug">
+          {conn.name}
+        </p>
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
+          <ConnectionBadge type={conn.type as ConnectionType} />
+          {conn.lastConnectedAt && (
+            <span className="text-xs text-[var(--color-text-muted)]">
+              Connected {formatDistanceToNow(new Date(conn.lastConnectedAt))} ago
+            </span>
+          )}
+          <AnalysisStatusBadge connectionId={conn.id} />
+        </div>
+        {/* Inline test feedback — below badges, not beside buttons */}
         {testResult === 'success' && (
-          <span className="text-label text-[var(--color-success)]">✓ Connected</span>
+          <p className="mt-1.5 text-xs text-[var(--color-success)]">✓ Connection successful</p>
         )}
         {testResult === 'error' && (
-          <span
-            className="text-label text-[var(--color-error)] max-w-[180px] truncate"
-            title={testError ?? 'Connection failed'}
-          >
+          <p className="mt-1.5 text-xs text-[var(--color-error)]">
             ✕ {testError ?? 'Connection failed'}
-          </span>
+          </p>
         )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-1 shrink-0">
         <button
           onClick={handleTest}
-          disabled={testingId === conn.id}
-          className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-md text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] disabled:opacity-50"
+          disabled={testing}
+          className="px-3 py-1.5 text-xs border border-[var(--color-border)] rounded-md text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] disabled:opacity-50 transition-colors"
         >
-          {testingId === conn.id ? 'Testing…' : 'Test'}
+          {testing ? 'Testing…' : 'Test'}
         </button>
-        <Link
-          href={`/connections/${conn.id}/knowledge`}
-          className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-md text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)]"
-        >
-          Knowledge
-        </Link>
-        <Link
-          href={`/connections/${conn.id}/edit`}
-          className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-md text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)]"
-        >
-          Edit
-        </Link>
-        <button
-          onClick={() => {
-            if (confirm(`Delete connection "${conn.name}"?`)) {
-              deleteConn(conn.id);
-            }
-          }}
-          className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-md text-[var(--color-error)] hover:bg-red-50"
-        >
-          Delete
-        </button>
+
+        <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              href={`/connections/${conn.id}/knowledge`}
+              className="p-1.5 rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)] transition-colors"
+            >
+              <BookOpen className="w-4 h-4" />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="top">Knowledge base</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              href={`/connections/${conn.id}/edit`}
+              className="p-1.5 rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text-primary)] transition-colors"
+            >
+              <Pencil className="w-4 h-4" />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="top">Edit</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={handleDelete}
+              className="p-1.5 rounded-md text-[var(--color-text-muted)] hover:bg-red-50 hover:text-[var(--color-error)] transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Delete</TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );
@@ -129,7 +141,7 @@ export function ConnectionList() {
     return (
       <div className="space-y-3 animate-pulse">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-20 bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)]" />
+          <div key={i} className="h-[72px] bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)]" />
         ))}
       </div>
     );
@@ -147,10 +159,12 @@ export function ConnectionList() {
   }
 
   return (
-    <div className="space-y-3">
-      {connections.map((conn) => (
-        <ConnectionRow key={conn.id} conn={conn} />
-      ))}
-    </div>
+    <TooltipProvider delayDuration={400}>
+      <div className="space-y-3">
+        {connections.map((conn) => (
+          <ConnectionCard key={conn.id} conn={conn} />
+        ))}
+      </div>
+    </TooltipProvider>
   );
 }
