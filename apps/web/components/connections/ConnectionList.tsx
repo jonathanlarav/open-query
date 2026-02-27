@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { Database, BookOpen, Pencil, Trash2 } from 'lucide-react';
+import { Database, BookOpen, Pencil, Trash2, RefreshCw } from 'lucide-react';
 import { useConnections, useDeleteConnection, useTestConnection } from '@/hooks/useConnections';
-import { useAnalysis } from '@/hooks/useAnalysis';
+import { useAnalysis, useTriggerAnalysis, useRetriggerAnalysis } from '@/hooks/useAnalysis';
 import { ConnectionBadge } from '@/components/shared/ConnectionBadge';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -12,19 +12,39 @@ import { formatDistanceToNow } from 'date-fns';
 import type { Connection, ConnectionType } from '@open-query/shared';
 import { useState } from 'react';
 
-function AnalysisStatusBadge({ connectionId }: { connectionId: string }) {
+function AnalysisStatus({ connectionId }: { connectionId: string }) {
   const { data: job } = useAnalysis(connectionId);
-  if (!job) return null;
+  const { mutate: trigger, isPending: triggering } = useTriggerAnalysis();
+  const { mutate: retrigger, isPending: retriggering } = useRetriggerAnalysis();
 
-  if (job.status === 'completed') {
-    return <span className="text-xs text-[var(--color-success)]">Ready ✓</span>;
-  }
-  if (job.status === 'failed') {
-    return <span className="text-xs text-[var(--color-error)]">Analysis failed</span>;
-  }
+  const isRunning = job?.status === 'pending' || job?.status === 'running';
+  const isBusy = isRunning || triggering || retriggering;
+
+  const handleReanalyze = () => {
+    if (job) retrigger(connectionId);
+    else trigger(connectionId);
+  };
+
   return (
-    <span className="text-xs text-[var(--color-text-muted)]">
-      Analyzing {job.progressPercent}%
+    <span className="flex items-center gap-1">
+      {!job && <span className="text-xs text-[var(--color-text-muted)]">Not analyzed</span>}
+      {job?.status === 'completed' && <span className="text-xs text-[var(--color-success)]">Ready ✓</span>}
+      {job?.status === 'failed' && <span className="text-xs text-[var(--color-error)]">Analysis failed</span>}
+      {isRunning && (
+        <span className="text-xs text-[var(--color-text-muted)]">Analyzing {job?.progressPercent ?? 0}%</span>
+      )}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={handleReanalyze}
+            disabled={isBusy}
+            className="p-0.5 rounded text-[var(--color-text-muted)] hover:text-[var(--brand-primary)] hover:bg-[var(--brand-primary-light)] transition-colors disabled:opacity-40"
+          >
+            <RefreshCw className={`w-3 h-3 ${isBusy ? 'animate-spin' : ''}`} />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top">{isRunning ? 'Analysis in progress…' : 'Re-run analysis'}</TooltipContent>
+      </Tooltip>
     </span>
   );
 }
@@ -68,7 +88,7 @@ function ConnectionCard({ conn }: { conn: Connection }) {
               Connected {formatDistanceToNow(new Date(conn.lastConnectedAt))} ago
             </span>
           )}
-          <AnalysisStatusBadge connectionId={conn.id} />
+          <AnalysisStatus connectionId={conn.id} />
         </div>
         {/* Inline test feedback — below badges, not beside buttons */}
         {testResult === 'success' && (

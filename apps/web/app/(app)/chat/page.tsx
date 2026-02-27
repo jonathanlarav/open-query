@@ -6,6 +6,7 @@ import { MessageSquare, Trash2, Plus } from 'lucide-react';
 import { useChatSessions, useDeleteSession } from '@/hooks/useChat';
 import { useConnections } from '@/hooks/useConnections';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { NoLLMBanner } from '@/components/shared/NoLLMBanner';
 import { NewChatDialog } from '@/components/chat/NewChatDialog';
 import { formatReportTime } from '@/lib/format-time';
 import type { Connection } from '@open-query/shared';
@@ -46,6 +47,7 @@ export default function ChatPage() {
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
+      <NoLLMBanner />
       <div className="flex items-start justify-between mb-8">
         <div>
           <h1 className="text-[1.875rem] font-semibold text-[var(--color-text-primary)]">Chat</h1>

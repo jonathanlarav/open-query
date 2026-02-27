@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ConnectionList } from '@/components/connections/ConnectionList';
 import { LLMProviderForm } from '@/components/shared/LLMProviderForm';
 import { GeneralSettingsForm } from '@/components/shared/GeneralSettingsForm';
+import { NoLLMBanner } from '@/components/shared/NoLLMBanner';
 import { cn } from '@/lib/utils';
 
 const TABS = [
@@ -69,6 +70,7 @@ function SettingsContent() {
 
         {activeTab === 'connections' && (
           <div className="max-w-2xl mx-auto">
+            <NoLLMBanner />
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Connections</h2>
