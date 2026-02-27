@@ -4,7 +4,7 @@
   "private": true,
   "description": "Next.js 15 frontend for open-query",
   "scripts": {
-    "dev": "next dev --port 3000",
+    "dev": "WATCHPACK_POLLING=true next dev --port 3000",
     "build": "next build",
     "start": "next start",
     "test": "vitest run",

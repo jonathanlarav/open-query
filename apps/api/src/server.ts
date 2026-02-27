@@ -5,8 +5,12 @@ import { initDatabase } from '@open-query/db';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Project root is 3 levels up from apps/api/src/
-const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../');
+// When bundled by esbuild for Electron, import.meta.url is undefined in the
+// CJS output. PROJECT_ROOT_OVERRIDE is set by the Electron process manager
+// to bypass that broken code path.
+const PROJECT_ROOT =
+  process.env['PROJECT_ROOT_OVERRIDE'] ??
+  resolve(dirname(fileURLToPath(import.meta.url)), '../../../');
 
 /** Resolve file: URIs with relative paths against the project root */
 function resolveDbUrl(url: string): string {
@@ -90,6 +94,8 @@ async function start() {
   }
 }
 
-void start();
+if (process.env['NODE_ENV'] !== 'test') {
+  void start();
+}
 
 export { buildServer };

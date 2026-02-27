@@ -1,0 +1,41 @@
+appId: com.openquery.app
+productName: Open Query
+directories:
+  buildResources: resources
+  output: build
+files:
+  - from: dist
+    to: dist
+    filter:
+      - "**/*.js"
+  - package.json
+  - node_modules/electron-is-dev/**
+mac:
+  target:
+    - dmg
+    - zip
+  entitlementsInherit: entitlements.mac.plist
+  hardenedRuntime: true
+  notarize: false
+  category: public.app-category.developer-tools
+extraResources:
+  - from: ../api/dist/server.bundle.js
+    to: api-bundle/server.bundle.js
+  - from: ../api/node_modules/better-sqlite3/
+    to: node_modules/better-sqlite3/
+  - from: ../../node_modules/.pnpm/bindings@1.5.0/node_modules/bindings/
+    to: node_modules/bindings/
+  - from: ../../node_modules/.pnpm/bindings@1.5.0/node_modules/file-uri-to-path/
+    to: node_modules/file-uri-to-path/
+  - from: ../web/.next/standalone/
+    to: web/
+  # Static JS/CSS chunks and media — must sit next to server.js in the pnpm
+  # monorepo nesting: standalone/apps/web/server.js expects .next/static/ at
+  # standalone/apps/web/.next/static/ (relative to its own __dirname).
+  - from: ../web/.next/static/
+    to: web/apps/web/.next/static/
+  - from: ../web/public/
+    to: web/apps/web/public/
+  - from: ../../packages/db/src/migrations/
+    to: migrations/
+npmRebuild: true

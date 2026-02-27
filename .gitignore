@@ -8,6 +8,10 @@ dist/
 .turbo/
 *.tsbuildinfo
 
+# Electron build artifacts
+apps/electron/build/
+apps/electron/dist/
+
 # Environment
 .env
 .env.local

@@ -27,7 +27,11 @@ const MODEL_DEFAULTS: Record<string, string> = {
 
 type TestStatus = 'idle' | 'testing' | 'success' | 'error';
 
-export function LLMProviderForm() {
+interface LLMProviderFormProps {
+  onSaveSuccess?: () => void | Promise<void>;
+}
+
+export function LLMProviderForm({ onSaveSuccess }: LLMProviderFormProps = {}) {
   const { data: settings, isLoading } = useSettings();
   const { mutate: updateSettings, isPending, isSuccess } = useUpdateSettings();
   const { mutate: testLLM } = useTestLLM();
@@ -66,10 +70,13 @@ export function LLMProviderForm() {
   const provider = form.watch('provider');
 
   const onSubmit = (values: FormValues) => {
-    updateSettings({
-      ...values,
-      ...(values.apiKey ? { apiKey: values.apiKey } : {}),
-    });
+    updateSettings(
+      {
+        ...values,
+        ...(values.apiKey ? { apiKey: values.apiKey } : {}),
+      },
+      { onSuccess: () => void onSaveSuccess?.() },
+    );
   };
 
   if (isLoading) {

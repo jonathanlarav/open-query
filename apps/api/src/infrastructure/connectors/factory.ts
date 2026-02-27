@@ -12,13 +12,13 @@ import { ErrorCode } from '@open-query/shared';
 function buildConnector(type: string, credentials: DatabaseCredentials['credentials']): DatabaseConnector {
   switch (type) {
     case 'postgres':
-      return new PostgresConnector(credentials as Parameters<typeof PostgresConnector>[0]);
+      return new PostgresConnector(credentials as ConstructorParameters<typeof PostgresConnector>[0]);
     case 'mysql':
-      return new MySQLConnector(credentials as Parameters<typeof MySQLConnector>[0]);
+      return new MySQLConnector(credentials as ConstructorParameters<typeof MySQLConnector>[0]);
     case 'sqlite':
-      return new SQLiteConnector(credentials as Parameters<typeof SQLiteConnector>[0]);
+      return new SQLiteConnector(credentials as ConstructorParameters<typeof SQLiteConnector>[0]);
     case 'mongodb':
-      return new MongoDBConnector(credentials as Parameters<typeof MongoDBConnector>[0]);
+      return new MongoDBConnector(credentials as ConstructorParameters<typeof MongoDBConnector>[0]);
     default:
       throw new AppError({
         code: ErrorCode.VALIDATION_ERROR,
