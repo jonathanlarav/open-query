@@ -8,6 +8,9 @@ jobs:
   build:
     runs-on: macos-14  # arm64 runner
 
+    permissions:
+      contents: write  # required to create GitHub Releases
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,11 +32,23 @@ jobs:
       - name: Build and package
         run: pnpm build && pnpm -w run package:mac
 
-      - name: Upload DMG
-        uses: actions/upload-artifact@v4
+      - name: Read version
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: Open-Query-${{ github.sha }}-arm64
-          path: |
+          tag_name: v${{ steps.version.outputs.version }}-${{ github.run_number }}
+          name: Open Query v${{ steps.version.outputs.version }} (build ${{ github.run_number }})
+          body: |
+            **macOS arm64 build** from commit ${{ github.sha }}
+
+            ### Install
+            1. Download `Open.Query-${{ steps.version.outputs.version }}-arm64.dmg`
+            2. Open the DMG and drag **Open Query** to Applications
+            3. Right-click → Open on first launch (unsigned app)
+          files: |
             apps/electron/build/*.dmg
             apps/electron/build/*.zip
-          retention-days: 30
+          make_latest: true
