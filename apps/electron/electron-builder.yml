@@ -10,12 +10,11 @@ files:
       - "**/*.js"
   - package.json
   - node_modules/electron-is-dev/**
+afterPack: afterPack.js
 mac:
   target:
     - dmg
     - zip
-  entitlementsInherit: entitlements.mac.plist
-  hardenedRuntime: true
   notarize: false
   category: public.app-category.developer-tools
 extraResources:
