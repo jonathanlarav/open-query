@@ -228,18 +228,27 @@ export function LLMProviderForm({ onSaveSuccess }: LLMProviderFormProps = {}) {
           type="button"
           disabled={testStatus === 'testing'}
           onClick={() => {
+            const values = form.getValues();
             setTestStatus('testing');
             setTestMessage(null);
-            testLLM(undefined, {
-              onSuccess: (result) => {
-                setTestStatus('success');
-                setTestMessage(`Connected to ${result.model} via ${result.provider}`);
+            testLLM(
+              {
+                provider: values.provider,
+                model: values.model,
+                apiKey: values.apiKey || undefined,
+                ollamaBaseUrl: values.ollamaBaseUrl || undefined,
               },
-              onError: (err) => {
-                setTestStatus('error');
-                setTestMessage(parseApiError(err).message);
+              {
+                onSuccess: (result) => {
+                  setTestStatus('success');
+                  setTestMessage(`Connected to ${result.model} via ${result.provider}`);
+                },
+                onError: (err) => {
+                  setTestStatus('error');
+                  setTestMessage(parseApiError(err).message);
+                },
               },
-            });
+            );
           }}
           className="px-4 py-2 rounded-lg text-sm font-medium border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] disabled:opacity-50"
         >

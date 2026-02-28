@@ -8,6 +8,15 @@ import { AppError } from '../../shared/errors/app-error.js';
 import { ErrorCode } from '@open-query/shared';
 import { LLMProviderSchema } from '@open-query/shared';
 
+export const TestLLMSchema = z.object({
+  provider: LLMProviderSchema.optional(),
+  model: z.string().min(1).optional(),
+  apiKey: z.string().optional(),
+  ollamaBaseUrl: z.string().optional(),
+});
+
+export type TestLLMInput = z.infer<typeof TestLLMSchema>;
+
 export const UpdateSettingsSchema = z.object({
   provider: LLMProviderSchema.optional(),
   model: z.string().min(1).optional(),
@@ -50,19 +59,42 @@ export class SettingsService {
     return this.getSettings();
   }
 
-  async testLLM(): Promise<{ model: string; provider: string }> {
-    const settings = findSettings(this.db);
-    if (!settings) {
+  async testLLM(overrides?: TestLLMInput): Promise<{ model: string; provider: string }> {
+    const saved = findSettings(this.db);
+
+    const provider = overrides?.provider ?? saved?.provider;
+    const model = overrides?.model ?? saved?.model;
+    const ollamaBaseUrl = overrides?.ollamaBaseUrl ?? saved?.ollamaBaseUrl ?? 'http://localhost:11434';
+
+    if (!provider || !model) {
       throw new AppError({
         code: ErrorCode.LLM_ERROR,
         message: 'No LLM settings configured. Add a provider and API key first.',
         statusCode: 400,
       });
     }
+
+    // Use the override plaintext key (encrypt it), else fall back to saved encrypted key
+    const encryptedApiKey = overrides?.apiKey
+      ? encrypt(overrides.apiKey)
+      : (saved?.encryptedApiKey ?? null);
+
+    const effectiveSettings = {
+      id: 'singleton',
+      provider,
+      model,
+      encryptedApiKey,
+      ollamaBaseUrl,
+      maxTokens: saved?.maxTokens ?? 4096,
+      temperature: saved?.temperature ?? 0,
+      chatHistoryLimit: saved?.chatHistoryLimit ?? 20,
+      updatedAt: new Date(),
+    };
+
     try {
-      const model = getLanguageModel(settings);
-      await generateText({ model, prompt: 'Reply with the single word: ok', maxTokens: 5 });
-      return { model: settings.model, provider: settings.provider };
+      const languageModel = getLanguageModel(effectiveSettings);
+      await generateText({ model: languageModel, prompt: 'Reply with the single word: ok', maxTokens: 5 });
+      return { model, provider };
     } catch (err) {
       throw new AppError({
         code: ErrorCode.LLM_ERROR,

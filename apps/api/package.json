@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.1.6",
-    "@ai-sdk/google": "^3.0.33",
+    "@ai-sdk/google": "^1.2.22",
     "@ai-sdk/openai": "^1.1.6",
     "@fastify/cors": "^10.0.2",
     "@fastify/helmet": "^13.0.1",

@@ -41,9 +41,16 @@ export function useUpdateSettings() {
   });
 }
 
+interface TestLLMInput {
+  provider?: string;
+  model?: string;
+  apiKey?: string;
+  ollamaBaseUrl?: string;
+}
+
 export function useTestLLM() {
   return useMutation({
-    mutationFn: () =>
-      apiClient.post<{ model: string; provider: string }>('/settings/test'),
+    mutationFn: (input: TestLLMInput) =>
+      apiClient.post<{ model: string; provider: string }>('/settings/test', input),
   });
 }

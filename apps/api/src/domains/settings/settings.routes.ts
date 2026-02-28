@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { SettingsService, UpdateSettingsSchema } from './settings.service.js';
+import { SettingsService, UpdateSettingsSchema, TestLLMSchema } from './settings.service.js';
 import { getDb } from '@open-query/db';
 
 export async function settingsRoutes(fastify: FastifyInstance): Promise<void> {
@@ -19,8 +19,10 @@ export async function settingsRoutes(fastify: FastifyInstance): Promise<void> {
   });
 
   // POST /api/v1/settings/test
-  fastify.post('/test', async (_req, reply) => {
-    const result = await getService().testLLM();
+  // Accepts optional body to test unsaved form values before saving
+  fastify.post('/test', async (req, reply) => {
+    const overrides = req.body ? TestLLMSchema.parse(req.body) : undefined;
+    const result = await getService().testLLM(overrides);
     return reply.send({ data: result });
   });
 }
