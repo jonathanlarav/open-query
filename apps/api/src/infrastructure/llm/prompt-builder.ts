@@ -153,5 +153,15 @@ column: <column_name>
 fact: <what you learned about this column or table>
 [/CONTEXT_UPDATE]
 
-Use [CONTEXT_UPDATE] blocks for table-level facts too (omit the column line for table-level facts).`;
+Use [CONTEXT_UPDATE] blocks for table-level facts too (omit the column line for table-level facts).
+
+When the user's message contains a factual statement about the data that isn't already in the schema context (e.g. "status=1 means active", "this table is only for EU customers"), emit at the END of your response:
+
+[CONTEXT_CONFIRM]
+table: <table_name>
+column: <column_name>
+fact: <what you learned>
+[/CONTEXT_CONFIRM]
+
+Omit the column line for table-level facts. Use [CONTEXT_CONFIRM] for passively observed facts. Use [CONTEXT_UPDATE] only after the user directly answers a clarifying question you asked.`;
 }

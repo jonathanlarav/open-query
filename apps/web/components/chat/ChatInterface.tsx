@@ -3,6 +3,7 @@
 import { useChat } from 'ai/react';
 import { useRef, useEffect, useState, useMemo } from 'react';
 import { BookOpen } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { MessageBubble } from './MessageBubble';
 import { PromptInput } from './PromptInput';
 import { ResultsPanel } from './ResultsPanel';
@@ -14,6 +15,7 @@ import { useConnection } from '@/hooks/useConnections';
 import { useSettings } from '@/hooks/useSettings';
 import { ActionableError } from '@/components/shared/ActionableError';
 import { parseApiError } from '@/lib/parse-api-error';
+import { parseContextUpdates } from '@/lib/parse-context-blocks';
 import type { QueryResult } from '@open-query/shared';
 
 interface ChatInterfaceProps {
@@ -26,7 +28,9 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
   const [activeQuery, setActiveQuery] = useState<string | null>(null);
   const [queryError, setQueryError] = useState<string | null>(null);
   const [knowledgePanelOpen, setKnowledgePanelOpen] = useState(true);
+  const [hasContextUpdates, setHasContextUpdates] = useState(false);
 
+  const qc = useQueryClient();
   const { data: session, isLoading: sessionLoading } = useChatSession(sessionId);
   const connectionId = session?.connectionId ?? '';
   const { data: connection } = useConnection(connectionId);
@@ -59,6 +63,16 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Watch for completed assistant messages containing CONTEXT_UPDATE blocks
+  useEffect(() => {
+    if (!connectionId || isLoading) return;
+    const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
+    if (lastAssistant && parseContextUpdates(lastAssistant.content).length > 0) {
+      void qc.invalidateQueries({ queryKey: ['context', connectionId] });
+      setHasContextUpdates(true);
+    }
+  }, [messages, isLoading, connectionId, qc]);
+
   const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user')?.content;
 
   const handleRunQuery = async (sql: string) => {
@@ -71,6 +85,11 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
       const parsed = parseApiError(err);
       setQueryError(parsed.message);
     }
+  };
+
+  const handleOpenKnowledgePanel = () => {
+    setKnowledgePanelOpen(true);
+    setHasContextUpdates(false);
   };
 
   if (sessionLoading || savedMessages === undefined) {
@@ -92,9 +111,12 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
         {!knowledgePanelOpen && (
           <div className="flex items-center justify-end px-4 py-2 border-b border-[var(--color-border)] shrink-0">
             <button
-              onClick={() => setKnowledgePanelOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)]"
+              onClick={handleOpenKnowledgePanel}
+              className="relative flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)]"
             >
+              {hasContextUpdates && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[var(--color-success)] animate-pulse" />
+              )}
               <BookOpen className="w-3.5 h-3.5" />
               Knowledge Base
             </button>
@@ -120,6 +142,7 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
               message={message}
               onRunQuery={handleRunQuery}
               isExecuting={isExecuting}
+              connectionId={connectionId}
             />
           ))}
 
@@ -183,6 +206,8 @@ export function ChatInterface({ sessionId }: ChatInterfaceProps) {
         <KnowledgePanel
           connectionId={connectionId}
           onClose={() => setKnowledgePanelOpen(false)}
+          hasRecentUpdate={hasContextUpdates}
+          onUpdateSeen={() => setHasContextUpdates(false)}
         />
       )}
     </div>

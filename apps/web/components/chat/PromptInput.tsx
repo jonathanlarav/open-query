@@ -1,7 +1,7 @@
 'use client';
 
 import type { ChangeEvent, FormEvent } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Info } from 'lucide-react';
 
 interface PromptInputProps {
   value: string;
@@ -56,6 +56,10 @@ export function PromptInput({ value, onChange, onSubmit, isLoading, connectionNa
             )}
           </p>
         )}
+        <p className="flex items-center justify-center gap-1 text-label text-[var(--color-text-muted)] mt-1">
+          <Info className="w-3 h-3 shrink-0" />
+          You can ask questions or tell me facts about your data to improve the knowledge base
+        </p>
       </form>
     </div>
   );

@@ -16,7 +16,7 @@ const MIN_WIDTH = 240;
 const MAX_WIDTH = 1365;
 const DEFAULT_WIDTH = 624;
 
-function TableList({ tables, contexts, onSelect, onClose, progressBar, onReanalyze, reanalyzing }: {
+function TableList({ tables, contexts, onSelect, onClose, progressBar, onReanalyze, reanalyzing, hasRecentUpdate }: {
   tables: TableInfo[];
   contexts: TableCtx[];
   onSelect: (t: TableInfo) => void;
@@ -24,6 +24,7 @@ function TableList({ tables, contexts, onSelect, onClose, progressBar, onReanaly
   progressBar: React.ReactNode;
   onReanalyze: () => void;
   reanalyzing: boolean;
+  hasRecentUpdate?: boolean;
 }) {
   const described = tables.filter(t => contexts.find(c => c.tableName === t.name)?.description).length;
 
@@ -31,7 +32,12 @@ function TableList({ tables, contexts, onSelect, onClose, progressBar, onReanaly
     <>
       <div className="flex items-start justify-between px-4 py-3 border-b border-[var(--color-border)] shrink-0">
         <div>
-          <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Knowledge Base</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Knowledge Base</h2>
+            {hasRecentUpdate && (
+              <span className="w-2 h-2 rounded-full bg-[var(--color-success)] animate-pulse shrink-0" />
+            )}
+          </div>
           <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
             {tables.length} tables · {described}/{tables.length} described
           </p>
@@ -157,7 +163,12 @@ function TableDetail({ table, tableCtx, colContexts, onBack, onClose }: {
   );
 }
 
-export function KnowledgePanel({ connectionId, onClose }: { connectionId: string; onClose: () => void }) {
+export function KnowledgePanel({ connectionId, onClose, hasRecentUpdate, onUpdateSeen }: {
+  connectionId: string;
+  onClose: () => void;
+  hasRecentUpdate?: boolean;
+  onUpdateSeen?: () => void;
+}) {
   const [selected, setSelected] = useState<TableInfo | null>(null);
   const [width, setWidth] = useState(DEFAULT_WIDTH);
   const dragState = useRef<{ startX: number; startWidth: number } | null>(null);
@@ -233,11 +244,12 @@ export function KnowledgePanel({ connectionId, onClose }: { connectionId: string
         <TableList
           tables={tables}
           contexts={tableContexts}
-          onSelect={setSelected}
+          onSelect={(t) => { setSelected(t); onUpdateSeen?.(); }}
           onClose={onClose}
           progressBar={progressBar}
           onReanalyze={handleReanalyze}
           reanalyzing={reanalyzing}
+          hasRecentUpdate={hasRecentUpdate}
         />
       )}
     </div>
