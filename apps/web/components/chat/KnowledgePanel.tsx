@@ -2,10 +2,10 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { PanelRightClose, ArrowLeft, ChevronRight } from 'lucide-react';
+import { PanelRightClose, ArrowLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { useSchema } from '@/hooks/useSchema';
-import { useAnalysis } from '@/hooks/useAnalysis';
+import { useAnalysis, useTriggerAnalysis, useRetriggerAnalysis } from '@/hooks/useAnalysis';
 import type { TableInfo } from '@open-query/shared';
 
 interface TableCtx { tableName: string; description: string | null; businessPurpose: string | null; }
@@ -16,12 +16,14 @@ const MIN_WIDTH = 240;
 const MAX_WIDTH = 1365;
 const DEFAULT_WIDTH = 624;
 
-function TableList({ tables, contexts, onSelect, onClose, progressBar }: {
+function TableList({ tables, contexts, onSelect, onClose, progressBar, onReanalyze, reanalyzing }: {
   tables: TableInfo[];
   contexts: TableCtx[];
   onSelect: (t: TableInfo) => void;
   onClose: () => void;
   progressBar: React.ReactNode;
+  onReanalyze: () => void;
+  reanalyzing: boolean;
 }) {
   const described = tables.filter(t => contexts.find(c => c.tableName === t.name)?.description).length;
 
@@ -70,9 +72,18 @@ function TableList({ tables, contexts, onSelect, onClose, progressBar }: {
         })}
 
         {tables.length === 0 && (
-          <p className="text-sm text-[var(--color-text-muted)] text-center py-10 px-4">
-            No schema data. Run analysis from the Knowledge Base page.
-          </p>
+          <div className="flex flex-col items-center gap-3 py-10 px-4 text-center">
+            <p className="text-sm text-[var(--color-text-muted)]">No schema data yet.</p>
+            <button
+              onClick={onReanalyze}
+              disabled={reanalyzing}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white disabled:opacity-50"
+              style={{ backgroundColor: 'var(--brand-primary)' }}
+            >
+              <RefreshCw className={`w-3 h-3 ${reanalyzing ? 'animate-spin' : ''}`} />
+              {reanalyzing ? 'Starting…' : 'Run Analysis'}
+            </button>
+          </div>
         )}
       </div>
     </>
@@ -158,6 +169,10 @@ export function KnowledgePanel({ connectionId, onClose }: { connectionId: string
     enabled: Boolean(connectionId),
   });
   const { data: job } = useAnalysis(connectionId);
+  const { mutate: trigger, isPending: triggering } = useTriggerAnalysis();
+  const { mutate: retrigger, isPending: retriggering } = useRetriggerAnalysis();
+  const reanalyzing = triggering || retriggering;
+  const handleReanalyze = () => { if (job) retrigger(connectionId); else trigger(connectionId); };
 
   const handleDragStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -221,6 +236,8 @@ export function KnowledgePanel({ connectionId, onClose }: { connectionId: string
           onSelect={setSelected}
           onClose={onClose}
           progressBar={progressBar}
+          onReanalyze={handleReanalyze}
+          reanalyzing={reanalyzing}
         />
       )}
     </div>

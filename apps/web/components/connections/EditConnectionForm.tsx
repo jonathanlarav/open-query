@@ -6,9 +6,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useConnection, useConnectionCredentials, useUpdateConnection, useTestRawCredentials } from '@/hooks/useConnections';
+import { useAnalysis, useTriggerAnalysis, useRetriggerAnalysis } from '@/hooks/useAnalysis';
 import { ConnectionBadge } from '@/components/shared/ConnectionBadge';
 import { ActionableError } from '@/components/shared/ActionableError';
 import { parseApiError } from '@/lib/parse-api-error';
+import { RefreshCw } from 'lucide-react';
 import type { ConnectionType } from '@open-query/shared';
 
 type TestStatus = 'idle' | 'testing' | 'success' | 'error';
@@ -38,8 +40,17 @@ export function EditConnectionForm({ connectionId }: EditConnectionFormProps) {
   const { data: storedCreds, isLoading: loadingCreds } = useConnectionCredentials(connectionId);
   const { mutate: updateConn, isPending, error } = useUpdateConnection(connectionId);
   const { mutate: testCreds } = useTestRawCredentials();
+  const { data: analysisJob } = useAnalysis(connectionId);
+  const { mutate: triggerAnalysis, isPending: triggering } = useTriggerAnalysis();
+  const { mutate: retriggerAnalysis, isPending: retriggering } = useRetriggerAnalysis();
   const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [testError, setTestError] = useState<string | null>(null);
+
+  const isAnalysisBusy = triggering || retriggering || analysisJob?.status === 'running' || analysisJob?.status === 'pending';
+  const handleReanalyze = () => {
+    if (analysisJob) retriggerAnalysis(connectionId);
+    else triggerAnalysis(connectionId);
+  };
 
   const form = useForm<EditFormValues>({
     resolver: zodResolver(EditFormSchema),
@@ -289,6 +300,29 @@ export function EditConnectionForm({ connectionId }: EditConnectionFormProps) {
           className="px-4 py-2 rounded-lg text-sm font-medium border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)]"
         >
           Cancel
+        </button>
+      </div>
+
+      {/* Analysis section */}
+      <div className="flex items-center justify-between p-3 bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)]">
+        <div>
+          <p className="text-sm font-medium text-[var(--color-text-primary)]">Database Analysis</p>
+          <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+            {!analysisJob && 'Not yet analyzed'}
+            {analysisJob?.status === 'pending' && 'Queued…'}
+            {analysisJob?.status === 'running' && `Analyzing… ${analysisJob.progressPercent ?? 0}%`}
+            {analysisJob?.status === 'completed' && 'Analysis complete ✓'}
+            {analysisJob?.status === 'failed' && `Failed${analysisJob.error ? `: ${analysisJob.error}` : ''}`}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleReanalyze}
+          disabled={isAnalysisBusy}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-white disabled:opacity-50"
+        >
+          <RefreshCw className={`w-3 h-3 ${isAnalysisBusy ? 'animate-spin' : ''}`} />
+          {isAnalysisBusy ? 'Running…' : analysisJob ? 'Re-run Analysis' : 'Run Analysis'}
         </button>
       </div>
     </form>

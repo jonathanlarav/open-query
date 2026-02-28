@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { X, AlertCircle } from 'lucide-react';
-import { useAnalysis } from '@/hooks/useAnalysis';
+import { X, AlertCircle, RefreshCw } from 'lucide-react';
+import { useAnalysis, useRetriggerAnalysis } from '@/hooks/useAnalysis';
 
 interface AnalysisBannerProps {
   connectionId: string;
@@ -11,6 +11,7 @@ interface AnalysisBannerProps {
 export function AnalysisBanner({ connectionId }: AnalysisBannerProps) {
   const [dismissed, setDismissed] = useState(false);
   const { data: job } = useAnalysis(connectionId);
+  const { mutate: retrigger, isPending: retriggering } = useRetriggerAnalysis();
 
   if (!job || dismissed) return null;
   if (job.status === 'completed') return null;
@@ -23,6 +24,14 @@ export function AnalysisBanner({ connectionId }: AnalysisBannerProps) {
         <span className="text-[var(--color-error)] flex-1">
           Database analysis failed{job.error ? `: ${job.error}` : ''}. Context may be incomplete.
         </span>
+        <button
+          onClick={() => retrigger(connectionId)}
+          disabled={retriggering}
+          className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium text-red-700 border border-red-300 hover:bg-red-100 disabled:opacity-50 shrink-0"
+        >
+          <RefreshCw className={`w-3 h-3 ${retriggering ? 'animate-spin' : ''}`} />
+          Re-run
+        </button>
         <button
           onClick={() => setDismissed(true)}
           className="text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
