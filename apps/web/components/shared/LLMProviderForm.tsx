@@ -19,9 +19,40 @@ const FormSchema = z.object({
 
 type FormValues = z.infer<typeof FormSchema>;
 
+const MODEL_OPTIONS: Record<string, { value: string; label: string }[]> = {
+  anthropic: [
+    { value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6 (Recommended)' },
+    { value: 'claude-opus-4-6', label: 'Claude Opus 4.6' },
+    { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5' },
+  ],
+  openai: [
+    { value: 'gpt-4o', label: 'GPT-4o (Recommended)' },
+    { value: 'gpt-4o-mini', label: 'GPT-4o mini' },
+    { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+    { value: 'o1', label: 'o1' },
+    { value: 'o3-mini', label: 'o3-mini' },
+  ],
+  google: [
+    { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash (Recommended)' },
+    { value: 'gemini-2.0-flash-lite', label: 'Gemini 2.0 Flash-Lite' },
+    { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
+    { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
+  ],
+  ollama: [
+    { value: 'llama3.2', label: 'Llama 3.2 (Recommended)' },
+    { value: 'llama3.1', label: 'Llama 3.1' },
+    { value: 'mistral', label: 'Mistral' },
+    { value: 'codellama', label: 'Code Llama' },
+    { value: 'deepseek-r1', label: 'DeepSeek R1' },
+    { value: 'qwen2.5-coder', label: 'Qwen 2.5 Coder' },
+    { value: 'phi3', label: 'Phi-3' },
+  ],
+};
+
 const MODEL_DEFAULTS: Record<string, string> = {
   anthropic: 'claude-sonnet-4-6',
   openai: 'gpt-4o',
+  google: 'gemini-2.0-flash',
   ollama: 'llama3.2',
 };
 
@@ -101,9 +132,9 @@ export function LLMProviderForm({ onSaveSuccess }: LLMProviderFormProps = {}) {
           <select
             {...form.register('provider')}
             onChange={(e) => {
-              form.setValue('provider', e.target.value as FormValues['provider']);
-              const model = MODEL_DEFAULTS[e.target.value];
-              if (model) form.setValue('model', model);
+              const newProvider = e.target.value as FormValues['provider'];
+              form.setValue('provider', newProvider);
+              form.setValue('model', MODEL_DEFAULTS[newProvider] ?? MODEL_OPTIONS[newProvider]?.[0]?.value ?? '');
             }}
             className="w-full max-w-2xl border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm bg-white text-[var(--color-text-primary)] focus:outline-none focus:ring-2 ring-[var(--brand-primary)]"
           >
@@ -117,11 +148,14 @@ export function LLMProviderForm({ onSaveSuccess }: LLMProviderFormProps = {}) {
           <label className="text-label font-medium text-[var(--color-text-primary)] block mb-1.5">
             Model
           </label>
-          <input
+          <select
             {...form.register('model')}
-            placeholder="e.g. claude-sonnet-4-6"
-            className="w-full max-w-2xl border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ring-[var(--brand-primary)]"
-          />
+            className="w-full max-w-2xl border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm bg-white text-[var(--color-text-primary)] focus:outline-none focus:ring-2 ring-[var(--brand-primary)]"
+          >
+            {(MODEL_OPTIONS[provider] ?? []).map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
         </div>
 
         {provider !== 'ollama' && (

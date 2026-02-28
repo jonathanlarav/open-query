@@ -11,12 +11,13 @@ export const CONNECTION_TYPE_LABELS: Record<ConnectionType, string> = {
   mongodb: 'MongoDB',
 };
 
-export const LLMProviderSchema = z.enum(['anthropic', 'openai', 'ollama']);
+export const LLMProviderSchema = z.enum(['anthropic', 'openai', 'google', 'ollama']);
 
 export type LLMProvider = z.infer<typeof LLMProviderSchema>;
 
 export const LLM_PROVIDER_LABELS: Record<LLMProvider, string> = {
   anthropic: 'Anthropic (Claude)',
   openai: 'OpenAI',
+  google: 'Google (Gemini)',
   ollama: 'Ollama (local)',
 };

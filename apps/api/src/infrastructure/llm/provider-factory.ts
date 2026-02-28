@@ -1,5 +1,6 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOllama } from 'ollama-ai-provider';
 import type { LanguageModel } from 'ai';
 import { decrypt } from '../crypto/encryption.js';
@@ -31,6 +32,18 @@ export function getLanguageModel(settings: SelectLLMSettings): LanguageModel {
       }
       const apiKey = decrypt(settings.encryptedApiKey);
       return createOpenAI({ apiKey })(settings.model) as unknown as LanguageModel;
+    }
+
+    case 'google': {
+      if (!settings.encryptedApiKey) {
+        throw new AppError({
+          code: ErrorCode.LLM_ERROR,
+          message: 'Google API key is not configured',
+          statusCode: 400,
+        });
+      }
+      const apiKey = decrypt(settings.encryptedApiKey);
+      return createGoogleGenerativeAI({ apiKey })(settings.model) as unknown as LanguageModel;
     }
 
     case 'ollama': {
