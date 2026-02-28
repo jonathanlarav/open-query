@@ -33,7 +33,12 @@ const MODEL_OPTIONS: Record<string, { value: string; label: string }[]> = {
     { value: 'o3-mini', label: 'o3-mini' },
   ],
   google: [
-    { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash (Recommended)' },
+    { value: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro Preview (Recommended)' },
+    { value: 'gemini-3-flash-preview', label: 'Gemini 3 Flash Preview' },
+    { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+    { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+    { value: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash-Lite' },
+    { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
     { value: 'gemini-2.0-flash-lite', label: 'Gemini 2.0 Flash-Lite' },
     { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
     { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
@@ -52,7 +57,7 @@ const MODEL_OPTIONS: Record<string, { value: string; label: string }[]> = {
 const MODEL_DEFAULTS: Record<string, string> = {
   anthropic: 'claude-sonnet-4-6',
   openai: 'gpt-4o',
-  google: 'gemini-2.0-flash',
+  google: 'gemini-3.1-pro-preview',
   ollama: 'llama3.2',
 };
 
